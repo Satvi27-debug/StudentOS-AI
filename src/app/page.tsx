@@ -1,69 +1,197 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getCurrentUserId } from "@/lib/auth";
+import { getProfile, listSubjectsDetail, listTasks } from "@/db/queries";
+import { dateKey, todayKey, formatDate } from "@/lib/date";
+import { Panel } from "@/components/Panel";
+import { TaskRow } from "@/components/tasks/TaskRow";
+import type { TaskView } from "@/components/tasks/TaskRow";
+import { DashboardAsk } from "@/components/DashboardAsk";
+import { SetupNotice } from "@/components/SetupNotice";
+import { IconArrowRight } from "@/components/icons";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+function greeting(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+export default async function HomePage() {
+  const userId = await getCurrentUserId();
+  const [profileQ, subjectsQ, tasksQ] = await Promise.all([
+    getProfile(userId),
+    listSubjectsDetail(userId),
+    listTasks(userId),
+  ]);
+
+  const profile = profileQ.data;
+  const subjects = subjectsQ.data ?? [];
+  const tasks = tasksQ.data ?? [];
+
+  const today = todayKey();
+  const openTasks = tasks
+    .filter((t) => t.status !== "done")
+    .map((t) => ({ ...t, dueDateKey: dateKey(t.dueDate) }))
+    .filter((t) => t.dueDateKey !== null && t.dueDateKey <= today)
+    .map(
+      (t): TaskView => ({
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        dueDate: t.dueDateKey,
+        status: t.status === "done" ? "done" : "todo",
+        source: t.source,
+        overdue: t.dueDateKey! < today,
+      })
+    )
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+
+  const allTopics = subjects.flatMap((s) => s.topics);
+  const doneCount = allTopics.filter((t) => t.status === "done").length;
+  const topicPct = allTopics.length
+    ? Math.round((doneCount / allTopics.length) * 100)
+    : 0;
+
+  const upcomingExams = subjects
+    .filter((s) => s.examDate && (dateKey(s.examDate) ?? "9999") >= today)
+    .sort((a, b) =>
+      (dateKey(a.examDate) ?? "9999").localeCompare(dateKey(b.examDate) ?? "9999")
+    );
+  const nextExam = upcomingExams[0];
+
+  const name = profile?.name && profile.name !== "Student" ? profile.name : "";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="space-y-8">
+      <SetupNotice />
+
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+          {greeting(new Date().getHours())}
+          {name ? `, ${name.split(" ")[0]}` : ""}
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Here is what you need to know right now. ·{" "}
+          {new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+      </header>
+
+      <Panel title="AI Assistant">
+        <DashboardAsk />
+        <p className="mt-2 text-xs text-zinc-500">
+          Ask anything — StudentOS routes it to the right agent and can turn plans into tasks.
+        </p>
+      </Panel>
+
+      <section aria-label="Today">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-zinc-900">Today</h2>
+          <Link
+            href="/tasks"
+            className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            All tasks <IconArrowRight />
+          </Link>
         </div>
-      </main>
+        <Panel className="!p-2">
+          {openTasks.length > 0 ? (
+            <div className="divide-y divide-zinc-100">
+              {openTasks.slice(0, 6).map((t) => (
+                <TaskRow key={t.id} task={t} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              Nothing due today. Tasks with today’s date or overdue will appear here.
+            </p>
+          )}
+        </Panel>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Academic"
+          action={
+            <Link
+              href="/study"
+              className="text-sm font-medium text-blue-700 hover:text-blue-800"
+            >
+              Study →
+            </Link>
+          }
+        >
+          {nextExam ? (
+            <div className="space-y-2">
+              <p className="text-sm text-zinc-700">
+                Next exam:{" "}
+                <span className="font-medium text-zinc-900">{nextExam.name}</span>
+                <span className="text-zinc-500"> · {formatDate(nextExam.examDate)}</span>
+              </p>
+              <p className="text-sm text-zinc-600">
+                {doneCount} of {allTopics.length} topics completed across{" "}
+                {subjects.length} subject{subjects.length === 1 ? "" : "s"}.
+              </p>
+              {allTopics.length > 0 ? (
+                <div className="h-1.5 w-40 overflow-hidden rounded-full bg-zinc-100">
+                  <div
+                    className="h-full rounded-full bg-blue-600"
+                    style={{ width: `${topicPct}%` }}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : subjects.length > 0 ? (
+            <p className="text-sm text-zinc-500">
+              No upcoming exam date recorded. Add exam dates in Study.
+            </p>
+          ) : (
+            <p className="text-sm text-zinc-500">No subjects yet. Start building your syllabus in Study.</p>
+          )}
+        </Panel>
+
+        <Panel
+          title="Career"
+          action={
+            <Link
+              href="/career"
+              className="text-sm font-medium text-blue-700 hover:text-blue-800"
+            >
+              Career →
+            </Link>
+          }
+        >
+          {profile?.targetRole ? (
+            <div className="space-y-2">
+              <p className="text-sm text-zinc-700">
+                Working towards:{" "}
+                <span className="font-medium text-zinc-900">{profile.targetRole}</span>
+              </p>
+              <p className="text-sm text-zinc-600">
+                {profile.skills?.length ? (
+                  <>
+                    Skills:{" "}
+                    <span className="text-zinc-900">
+                      {profile.skills.slice(0, 6).join(", ")}
+                      {profile.skills.length > 6 ? "…" : ""}
+                    </span>
+                  </>
+                ) : (
+                  "No skills recorded yet."
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              No career goal yet. Set a target role so the Career Agent can guide you.
+            </p>
+          )}
+        </Panel>
+      </section>
     </div>
   );
 }
