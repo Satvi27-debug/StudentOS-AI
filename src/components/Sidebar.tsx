@@ -9,6 +9,7 @@ import {
   IconCode,
   IconFolder,
   IconHome,
+  IconSparkles,
   IconTarget,
   IconTasks,
   IconTrendingUp,
@@ -20,6 +21,7 @@ type NavItem = { href: string; label: string; icon: React.ComponentType<{ classN
 
 const mainNav: NavItem[] = [
   { href: '/', label: 'Home', icon: IconHome },
+  { href: '/brief', label: 'Brief', icon: IconSparkles },
   { href: '/study', label: 'Study', icon: IconBook },
   { href: '/coding', label: 'Coding', icon: IconCode },
   { href: '/projects', label: 'Projects', icon: IconFolder },
