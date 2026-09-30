@@ -7,11 +7,8 @@ import {
   IconBook,
   IconBriefcase,
   IconCode,
-  IconFlask,
   IconFolder,
-  IconGlobe,
   IconHome,
-  IconSparkles,
   IconTarget,
   IconTasks,
   IconTrendingUp,
@@ -27,13 +24,10 @@ const mainNav: NavItem[] = [
   { href: '/coding', label: 'Coding', icon: IconCode },
   { href: '/projects', label: 'Projects', icon: IconFolder },
   { href: '/career', label: 'Career', icon: IconBriefcase },
-  { href: '/opportunities', label: 'Opportunities', icon: IconGlobe },
-  { href: '/research', label: 'Research', icon: IconFlask },
   { href: '/tasks', label: 'Tasks', icon: IconTasks },
   { href: '/goals', label: 'Goals', icon: IconTarget },
   { href: '/skills', label: 'Skills', icon: IconTrendingUp },
   { href: '/productivity', label: 'Productivity', icon: IconTrendingUp },
-  { href: '/assistant', label: 'AI Assistant', icon: IconSparkles },
 ]
 
 function Logo() {

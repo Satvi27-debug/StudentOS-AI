@@ -6,7 +6,7 @@ import { SubjectBoard } from '@/components/study/SubjectBoard'
 import { StudySessionForm } from '@/components/study/StudySessionForm'
 import { studyTimeOn, studyTimeThisWeek, studyTimeBySubject } from '@/lib/local/selectors'
 import { todayKey } from '@/lib/date'
-import { IconClock, IconTrendingUp } from '@/components/icons'
+import { IconClock, IconSparkles, IconTrendingUp } from '@/components/icons'
 
 export default function StudyPage() {
   const { state } = useStudent()
@@ -110,6 +110,17 @@ export default function StudyPage() {
       ) : null}
 
       <SubjectBoard subjects={state.subjects} />
+
+      {/* Ask AI — opens the assistant with a study-focused query */}
+      <div className="flex justify-center">
+        <a
+          href="/assistant?q=I need help with my studies"
+          className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/50 px-4 py-2.5 text-sm font-medium text-indigo-700 transition-all hover:-translate-y-0.5 hover:bg-indigo-50 hover:shadow-md active:scale-95"
+        >
+          <IconSparkles className="h-4 w-4" />
+          Ask AI for help with studies
+        </a>
+      </div>
     </div>
   )
 }
