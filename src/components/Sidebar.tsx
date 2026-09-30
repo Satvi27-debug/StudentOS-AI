@@ -12,7 +12,9 @@ import {
   IconGlobe,
   IconHome,
   IconSparkles,
+  IconTarget,
   IconTasks,
+  IconTrendingUp,
   IconUser,
 } from '@/components/icons'
 import { clerkEnabled } from '@/lib/auth-client'
@@ -28,6 +30,9 @@ const mainNav: NavItem[] = [
   { href: '/opportunities', label: 'Opportunities', icon: IconGlobe },
   { href: '/research', label: 'Research', icon: IconFlask },
   { href: '/tasks', label: 'Tasks', icon: IconTasks },
+  { href: '/goals', label: 'Goals', icon: IconTarget },
+  { href: '/skills', label: 'Skills', icon: IconTrendingUp },
+  { href: '/productivity', label: 'Productivity', icon: IconTrendingUp },
   { href: '/assistant', label: 'AI Assistant', icon: IconSparkles },
 ]
 

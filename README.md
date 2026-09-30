@@ -2,29 +2,37 @@
 
 An AI-powered **student operating system**: one dashboard that brings together study, tasks, career, and an AI assistant that actually knows your context — and converts its plans into real tasks.
 
-Built with **Next.js 16 + TypeScript + Mastra + Gemini + PostgreSQL (+ optional Clerk)**.
+Built with **Next.js 16 + TypeScript + Tailwind CSS**.
 
 ---
 
-## What's in the MVP
+## Current Stage: Level 1
 
-| Area | Status |
-| --- | --- |
-| **Dashboard** | Today's tasks, next exam, career goal, quick-ask box |
-| **AI Assistant** | Supervisor routes requests to specialized agents; streams answers live |
-| **Study** | Subjects, syllabus topics, exam dates, topic progress |
-| **Tasks** | One unified list — your own to-dos plus AI-created tasks |
-| **Career** | Target role, skills, interests in your profile |
-| **Profile** | Single student profile that grounds every agent |
-| **Coding / Projects / Opportunities / Research** | Placeholder pages (later milestones) |
+**No AI. No database. No external APIs. No authentication.**
 
-### How the assistant works
+Everything runs locally using application state and structured seed data. The app persists to `localStorage` so your data survives a refresh.
 
-1. Your request plus your real student context (profile, subjects, open tasks) goes to the **Supervisor**.
-2. The Supervisor picks the best-fit agent: **Study**, **Productivity**, **Career**, or General.
-3. The chosen agent streams an answer back. When a plan emerges, it can call the **`create_tasks`** tool to turn it into real entries in your Tasks list — no copy-pasting.
+### Implemented
 
-The system never fabricates data: if Gemini isn't configured, the database is empty, or something fails to load, it says so explicitly.
+- **Dashboard** — today's tasks, upcoming deadlines, study progress, active goals, quick stats
+- **Tasks** — full CRUD, priority, category, due date, filter, sort
+- **Goals** — create, edit, delete, complete, track progress, target dates
+- **Study** — subjects, topics, exam dates, auto-calculated progress
+- **Study Sessions** — log sessions with subject, topic, duration, date, notes; view stats
+- **Projects** — create projects with status, deadline, tasks; progress from tasks
+- **Skills** — add/edit/remove skills with proficiency levels
+- **Career Profile** — target role, interests, skills, projects
+- **Productivity Overview** — completed/pending tasks, goals, study hours, project stats
+- **Local Persistence** — all data saved to `localStorage`, survives refresh
+- **Seed Data** — realistic starter data (Satvendra, B.Tech, AI/ML focus)
+
+### Not Yet Implemented
+
+- AI assistant (Level 2)
+- Backend / database (Level 2)
+- External datasets (Level 2)
+- External APIs (Level 2)
+- Authentication (Level 2)
 
 ---
 
@@ -36,31 +44,7 @@ The system never fabricates data: if Gemini isn't configured, the database is em
 npm install
 ```
 
-### 2. Configure environment
-
-```bash
-cp .env.example .env
-```
-
-Fill in what you have. The app **degrades gracefully** — it runs with nothing set (local mode, setup notice on the dashboard).
-
-| Variable | Required for | Notes |
-| --- | --- | --- |
-| `GOOGLE_API_KEY` | AI Assistant | Get one at https://aistudio.google.com/apikey |
-| `GEMINI_MODEL` | (optional) | Default `google/gemini-2.5-flash` |
-| `DATABASE_URL` | Profile / Study / Tasks | Postgres connection string |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` | (optional) | Without them the app runs as single-user `local` mode |
-
-### 3. Start the database
-
-```bash
-docker compose up -d     # local Postgres (matches .env defaults)
-npm run db:push          # create/update tables
-```
-
-(Or point `DATABASE_URL` at any existing Postgres and run `npm run db:push`.)
-
-### 4. Run
+### 2. Run
 
 ```bash
 npm run dev
@@ -68,13 +52,13 @@ npm run dev
 
 Open http://localhost:3000.
 
-### Useful commands
+### 3. Reset to seed data
 
-```bash
-npm run db:studio   # browse the database in Drizzle Studio
-npm run lint        # eslint
-npm run build       # production build + type check
-npm run db:setup    # convenience: db:up + db:push
+If you want to start fresh, open the browser console and run:
+
+```js
+localStorage.removeItem('studentos-state-v1')
+location.reload()
 ```
 
 ---
@@ -84,31 +68,71 @@ npm run db:setup    # convenience: db:up + db:push
 ```
 src/
 ├─ app/                    # Next.js App Router
-│  ├─ (dashboard, study, tasks, career, profile, assistant, …)
-│  └─ api/assistant/       # NDJSON streaming chat endpoint
-├─ mastra/
-│  ├─ agents/              # Supervisor + Study / Productivity / Career agents
-│  ├─ tools/create-tasks   # AI → action: turns plans into real tasks
-│  ├─ routing.ts           # structured-output router (study/productivity/career/general)
-│  └─ context.ts           # builds the student context block from DB data
-├─ db/                     # Drizzle schema + query layer (never throws)
-├─ actions/                # Server Actions for data mutations
-├─ lib/                    # auth, date helpers, AsyncLocalStorage user context
-└─ components/             # restrained zinc/blue UI kit
+│  ├─ (dashboard, study, tasks, goals, projects, skills, career, profile, productivity, assistant, …)
+│  └─ api/assistant/       # NDJSON streaming chat endpoint (Level 2)
+├─ lib/
+│  ├─ local/               # Level 1 local data layer
+│  │  ├─ types.ts          # TypeScript interfaces
+│  │  ├─ seed.ts           # Realistic starter data
+│  │  ├─ storage.ts        # localStorage abstraction
+│  │  ├─ store.tsx         # Central state (React Context + useReducer)
+│  │  └─ selectors.ts      # Derived calculations
+│  ├─ mastra/              # AI agents (Level 2)
+│  ├─ db/                  # Drizzle schema + queries (Level 2)
+│  └─ ...
+├─ components/             # UI components
+└─ ...
 ```
 
-- **Single database, no extra infra.** No vector store, no queue, no microservices. One Postgres with `profiles`, `subjects`, `topics`, `tasks`.
-- **AI → action.** The `create_tasks` tool receives user id via `AsyncLocalStorage`, so agents can safely write tasks for the signed-in (or local) student.
-- **Optional auth.** Clerk keys present → real sign-in and per-user data. Absent → single-user `local` mode.
-- **Honest by default.** Every page and agent path degrades to a clear "not configured / missing data" message instead of inventing content.
+### Data flow (Level 1)
 
-## Roadmap
+```
+UI Components
+    ↓
+useStudent() / useStudentActions()
+    ↓
+StudentProvider (React Context + useReducer)
+    ↓
+localStorage (persistence)
+```
 
-Later milestones (stubs already in the nav):
+### Future architecture
 
-- **Coding agent** — practice problems, language/skill plans tied to the profile
-- **Projects agent** — portfolio planning, repo scaffolding, milestone tracking
-- **Opportunities agent** — internships, placement drives, deadlines
-- **Research agent** — papers, literature review, seminar prep
-- **Resume agent** — profile-grounded resume and interview prep
-- Rich content (notes, revision cards) and study scheduling with procrastination-aware planning
+```
+LEVEL 2:  UI → Application Services → Backend → Database
+LEVEL 3:  StudentOS → AI Orchestrator → Study/Coding/Career/Research/Project AI
+```
+
+---
+
+## Project Structure
+
+| Area | Status |
+| --- | --- |
+| **Dashboard** | ✅ Level 1 |
+| **Tasks** | ✅ Level 1 |
+| **Goals** | ✅ Level 1 |
+| **Study** | ✅ Level 1 |
+| **Study Sessions** | ✅ Level 1 |
+| **Projects** | ✅ Level 1 |
+| **Skills** | ✅ Level 1 |
+| **Career Profile** | ✅ Level 1 |
+| **Productivity** | ✅ Level 1 |
+| **AI Assistant** | 🔜 Level 2 |
+| **Coding Agent** | 🔜 Level 2 |
+| **Projects Agent** | 🔜 Level 2 |
+| **Opportunities Agent** | 🔜 Level 2 |
+| **Research Agent** | 🔜 Level 2 |
+
+---
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **State**: React Context + useReducer
+- **Persistence**: localStorage
+- **AI**: Mastra + Gemini (Level 2)
+- **Database**: PostgreSQL + Drizzle (Level 2)
+- **Auth**: Clerk (Level 2)

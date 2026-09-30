@@ -1,31 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { addTaskAction } from '@/actions/tasks'
+import { useStudentActions } from '@/lib/local/store'
 import { IconPlus } from '@/components/icons'
 
 export function AddTask() {
-  const router = useRouter()
+  const actions = useStudentActions()
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium')
+  const [category, setCategory] = useState<'study' | 'coding' | 'project' | 'career' | 'research' | 'personal'>('personal')
 
-  const submit = async () => {
+  const submit = () => {
     const trimmed = title.trim()
-    if (!trimmed || busy) return
-    setBusy(true)
-    setError('')
-    const res = await addTaskAction({ title: trimmed, dueDate })
-    setBusy(false)
-    if (res.ok) {
-      setTitle('')
-      setDueDate('')
-      router.refresh()
-    } else {
-      setError(res.error ?? 'Could not add task.')
-    }
+    if (!trimmed) return
+    actions.addTask({ title: trimmed, dueDate: dueDate || null, priority, category })
+    setTitle('')
+    setDueDate('')
+    setPriority('medium')
+    setCategory('personal')
   }
 
   const inputCls =
@@ -49,17 +42,37 @@ export function AddTask() {
           aria-label="Due date"
           className={inputCls}
         />
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
+          className={inputCls}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as 'study' | 'coding' | 'project' | 'career' | 'research' | 'personal')}
+          className={inputCls}
+        >
+          <option value="study">Study</option>
+          <option value="coding">Coding</option>
+          <option value="project">Project</option>
+          <option value="career">Career</option>
+          <option value="research">Research</option>
+          <option value="personal">Personal</option>
+        </select>
         <button
           type="button"
           onClick={submit}
-          disabled={busy || !title.trim()}
+          disabled={!title.trim()}
           className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
           <IconPlus />
           Add
         </button>
       </div>
-      {error ? <p className="mt-1.5 text-xs text-rose-600">{error}</p> : null}
     </div>
   )
 }

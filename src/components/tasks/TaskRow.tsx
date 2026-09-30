@@ -1,51 +1,34 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { toggleTaskAction, deleteTaskAction } from '@/actions/tasks'
+import { useStudentActions } from '@/lib/local/store'
 import { formatDate } from '@/lib/date'
 import { IconTrash } from '@/components/icons'
 
 export type TaskView = {
-  id: number
+  id: string
   title: string
   description?: string | null
   dueDate: string | null
   status: 'todo' | 'done'
-  source: string
   overdue?: boolean
 }
 
 export function TaskRow({ task }: { task: TaskView }) {
-  const router = useRouter()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const actions = useStudentActions()
   const [justDone, setJustDone] = useState(false)
   const done = task.status === 'done'
 
-  const toggle = async () => {
-    if (busy) return
-    setBusy(true)
-    const res = await toggleTaskAction(task.id)
-    setBusy(false)
-    if (res.ok) {
-      if (!done) {
-        setJustDone(true)
-        setTimeout(() => setJustDone(false), 600)
-      }
-      router.refresh()
-    } else {
-      setError(res.error ?? 'Could not update task.')
+  const toggle = () => {
+    actions.toggleTask(task.id)
+    if (!done) {
+      setJustDone(true)
+      setTimeout(() => setJustDone(false), 600)
     }
   }
 
-  const remove = async () => {
-    if (busy) return
-    setBusy(true)
-    const res = await deleteTaskAction(task.id)
-    setBusy(false)
-    if (res.ok) router.refresh()
-    else setError(res.error ?? 'Could not delete task.')
+  const remove = () => {
+    actions.deleteTask(task.id)
   }
 
   return (
@@ -57,7 +40,6 @@ export function TaskRow({ task }: { task: TaskView }) {
       <button
         type="button"
         onClick={toggle}
-        disabled={busy}
         aria-label={done ? 'Mark as not done' : 'Mark as done'}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-200 active:scale-75 ${
           done
@@ -105,19 +87,14 @@ export function TaskRow({ task }: { task: TaskView }) {
               {formatDate(task.dueDate)}
             </span>
           ) : null}
-          {task.source === 'ai' ? (
-            <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-600">
-              AI
-            </span>
-          ) : null}
-          {error ? <span className="text-rose-600">{error}</span> : null}
+
+
         </div>
       </div>
 
       <button
         type="button"
         onClick={remove}
-        disabled={busy}
         aria-label="Delete task"
         className="rounded-lg p-1.5 text-zinc-300 transition-all hover:bg-rose-50 hover:text-rose-500 active:scale-90 sm:opacity-0 sm:group-hover:opacity-100"
       >

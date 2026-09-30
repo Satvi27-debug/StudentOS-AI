@@ -1,29 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import {
-  addSubjectAction,
-  addTopicAction,
-  deleteSubjectAction,
-  setTopicStatusAction,
-} from '@/actions/subjects'
+import { useStudentActions } from '@/lib/local/store'
 import { formatDate } from '@/lib/date'
 import { IconPlus, IconTrash } from '@/components/icons'
 
 export type TopicView = {
-  id: number
+  id: string
   name: string
   status: 'todo' | 'in_progress' | 'done'
 }
 export type SubjectView = {
-  id: number
+  id: string
   name: string
   examDate: string | null
   topics: TopicView[]
 }
-
-const STATUS_CYCLE: Array<TopicView['status']> = ['todo', 'in_progress', 'done']
 
 function statusStyle(status: TopicView['status']) {
   switch (status) {
@@ -37,24 +29,16 @@ function statusStyle(status: TopicView['status']) {
 }
 
 function AddSubjectForm({ onDone }: { onDone: () => void }) {
+  const actions = useStudentActions()
   const [name, setName] = useState('')
   const [examDate, setExamDate] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
 
-  const submit = async () => {
-    if (!name.trim() || busy) return
-    setBusy(true)
-    setError('')
-    const res = await addSubjectAction({ name, examDate })
-    setBusy(false)
-    if (res.ok) {
-      setName('')
-      setExamDate('')
-      onDone()
-    } else {
-      setError(res.error ?? 'Could not add subject.')
-    }
+  const submit = () => {
+    if (!name.trim()) return
+    actions.addSubject(name, examDate || null)
+    setName('')
+    setExamDate('')
+    onDone()
   }
 
   const inputCls =
@@ -81,52 +65,43 @@ function AddSubjectForm({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={submit}
-          disabled={busy || !name.trim()}
+          disabled={!name.trim()}
           className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
           <IconPlus />
           Add subject
         </button>
       </div>
-      {error ? <p className="mt-1.5 text-xs text-rose-600">{error}</p> : null}
     </div>
   )
 }
 
 export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onChanged: () => void }) {
+  const actions = useStudentActions()
   const [showAdd, setShowAdd] = useState(false)
   const [newTopic, setNewTopic] = useState('')
-  const [busy, setBusy] = useState(false)
 
   const doneCount = subject.topics.filter((t) => t.status === 'done').length
   const total = subject.topics.length
   const pct = total ? Math.round((doneCount / total) * 100) : 0
 
-  const cycleStatus = async (topicId: number, current: TopicView['status']) => {
-    if (busy) return
-    setBusy(true)
-    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(current) + 1) % STATUS_CYCLE.length]
-    const res = await setTopicStatusAction({ topicId, status: next })
-    setBusy(false)
-    if (res.ok) onChanged()
+  const cycleStatus = (topicId: string) => {
+    actions.cycleTopicStatus(subject.id, topicId)
+    onChanged()
   }
 
-  const addTopic = async () => {
+  const addTopic = () => {
     const name = newTopic.trim()
-    if (!name || busy) return
-    setBusy(true)
-    const res = await addTopicAction({ subjectId: subject.id, name })
-    setBusy(false)
-    if (res.ok) {
-      setNewTopic('')
-      onChanged()
-    }
+    if (!name) return
+    actions.addTopic(subject.id, name)
+    setNewTopic('')
+    onChanged()
   }
 
-  const removeSubject = async () => {
+  const removeSubject = () => {
     if (!confirm(`Delete "${subject.name}" and its topics?`)) return
-    const res = await deleteSubjectAction(subject.id)
-    if (res.ok) onChanged()
+    actions.deleteSubject(subject.id)
+    onChanged()
   }
 
   return (
@@ -173,8 +148,7 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
             >
               <button
                 type="button"
-                onClick={() => cycleStatus(topic.id, topic.status)}
-                disabled={busy}
+                onClick={() => cycleStatus(topic.id)}
                 className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-all active:scale-90 ${statusStyle(topic.status)}`}
               >
                 {topic.status === 'todo'
@@ -212,7 +186,7 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
             <button
               type="button"
               onClick={addTopic}
-              disabled={busy || !newTopic.trim()}
+              disabled={!newTopic.trim()}
               className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:shadow-none"
             >
               Add
@@ -240,8 +214,6 @@ export function SubjectBoard({
   subjects: SubjectView[]
   addable?: boolean
 }) {
-  const router = useRouter()
-  const refresh = () => router.refresh()
   const [showAdd, setShowAdd] = useState(false)
 
   return (
@@ -257,12 +229,12 @@ export function SubjectBoard({
           </p>
         </div>
       ) : (
-        subjects.map((s) => <SubjectCard key={s.id} subject={s} onChanged={refresh} />)
+        subjects.map((s) => <SubjectCard key={s.id} subject={s} onChanged={() => {}} />)
       )}
 
       {addable ? (
         showAdd ? (
-          <AddSubjectForm onDone={refresh} />
+          <AddSubjectForm onDone={() => setShowAdd(false)} />
         ) : (
           <button
             type="button"

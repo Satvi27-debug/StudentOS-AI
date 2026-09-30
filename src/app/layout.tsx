@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 import { clerkEnabled } from "@/lib/auth-client";
+import { StudentProvider } from "@/lib/local/store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +26,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  const app = <AppShell>{children}</AppShell>;
+  const app = (
+    <StudentProvider>
+      <AppShell>{children}</AppShell>
+    </StudentProvider>
+  );
   return (
     <html
       lang="en"
