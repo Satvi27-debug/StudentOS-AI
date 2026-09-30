@@ -156,3 +156,145 @@ export function IconCalendar(p: IconProps) {
     </svg>
   )
 }
+export function IconCheck(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="m4.5 12.5 5 5 10-11" />
+    </svg>
+  )
+}
+export function IconClock(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  )
+}
+export function IconFlame(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M12 22c4.4 0 7-2.8 7-6.5 0-3-2-5.5-3.5-7C14 7 13 5.5 13 3c-3 2-5 4.5-5 8-1-.5-1.7-1.3-2-2.5C4.7 10 4 12 4 14c0 4.5 3.6 8 8 8Z" />
+    </svg>
+  )
+}
+export function IconTarget(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+export function IconZap(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" />
+    </svg>
+  )
+}
+export function IconSend(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M21 3 10.5 13.5" />
+      <path d="M21 3 14 21l-3.5-7.5L3 10 21 3Z" />
+    </svg>
+  )
+}
+export function IconBot(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <rect x="4" y="8" width="16" height="12" rx="3" />
+      <path d="M12 8V4" />
+      <circle cx="12" cy="3" r="1" fill="currentColor" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" />
+      <path d="M9 17h6" />
+    </svg>
+  )
+}
+export function IconDatabase(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <ellipse cx="12" cy="5.5" rx="8" ry="3" />
+      <path d="M4 5.5V12c0 1.7 3.6 3 8 3s8-1.3 8-3V5.5" />
+      <path d="M4 12v6.5c0 1.7 3.6 3 8 3s8-1.3 8-3V12" />
+    </svg>
+  )
+}
+export function IconKey(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="8" cy="15" r="4.5" />
+      <path d="m11.5 11.5 8-8" />
+      <path d="m17 5 2.5 2.5" />
+      <path d="m14 8 2 2" />
+    </svg>
+  )
+}
+export function IconShield(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M12 2 4.5 5.5v5.7c0 4.6 3.2 8 7.5 9.8 4.3-1.8 7.5-5.2 7.5-9.8V5.5L12 2Z" />
+      <path d="m8.8 11.8 2.3 2.3 4.2-4.6" />
+    </svg>
+  )
+}
+export function IconChevronDown(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+export function IconTrendingUp(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="m3 17 6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
+    </svg>
+  )
+}
+export function IconAward(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="12" cy="9" r="6" />
+      <path d="m8.5 14-2 7 5.5-3 5.5 3-2-7" />
+    </svg>
+  )
+}
+export function IconRocket(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M12 15c5-3 7-8 7-12-4 0-9 2-12 7l-3 1 4 4 1-3" />
+      <path d="M9 12 5 16" />
+      <path d="M14 5.5c1.5-1 3.5-1.5 5.5-1.5-.5 2-1 4-2 5.5" />
+      <circle cx="14.5" cy="9.5" r="1.5" />
+    </svg>
+  )
+}
+export function IconBell(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 15 18 9Z" />
+      <path d="M10 20a2.2 2.2 0 0 0 4 0" />
+    </svg>
+  )
+}
+export function IconSearch(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20.5 20.5-4.6-4.6" />
+    </svg>
+  )
+}
+export function IconSettings(p: IconProps) {
+  return (
+    <svg {...base(p, 16)}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87 1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1Z" />
+    </svg>
+  )
+}

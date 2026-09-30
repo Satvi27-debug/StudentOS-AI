@@ -28,11 +28,11 @@ const STATUS_CYCLE: Array<TopicView['status']> = ['todo', 'in_progress', 'done']
 function statusStyle(status: TopicView['status']) {
   switch (status) {
     case 'done':
-      return 'bg-green-100 text-green-700 border-green-200'
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
     case 'in_progress':
-      return 'bg-amber-100 text-amber-700 border-amber-200'
+      return 'bg-amber-50 text-amber-700 border-amber-200'
     default:
-      return 'bg-zinc-100 text-zinc-600 border-zinc-200'
+      return 'bg-zinc-100 text-zinc-500 border-zinc-200'
   }
 }
 
@@ -57,8 +57,11 @@ function AddSubjectForm({ onDone }: { onDone: () => void }) {
     }
   }
 
+  const inputCls =
+    'flex-1 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10'
+
   return (
-    <div className="border-t border-zinc-200 px-5 py-4">
+    <div className="border-t border-zinc-100 px-5 py-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           type="text"
@@ -66,26 +69,26 @@ function AddSubjectForm({ onDone }: { onDone: () => void }) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder="Subject name (e.g. Operating Systems)"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={inputCls}
         />
         <input
           type="date"
           value={examDate}
           onChange={(e) => setExamDate(e.target.value)}
           aria-label="Exam date"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2 text-sm text-zinc-900 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
         />
         <button
           type="button"
           onClick={submit}
           disabled={busy || !name.trim()}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
           <IconPlus />
           Add subject
         </button>
       </div>
-      {error ? <p className="mt-1.5 text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1.5 text-xs text-rose-600">{error}</p> : null}
     </div>
   )
 }
@@ -127,26 +130,34 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between px-5 py-3.5">
+    <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.05),0_12px_28px_rgba(0,0,0,0.08)]">
+      <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-zinc-900">{subject.name}</p>
+          <p className="truncate text-[15px] font-semibold text-zinc-900">{subject.name}</p>
           <p className="mt-0.5 text-xs text-zinc-500">
             {subject.examDate ? `Exam: ${formatDate(subject.examDate)}` : 'No exam date'} ·{' '}
-            {doneCount}/{total} topics
+            <span className={doneCount === total && total > 0 ? 'font-medium text-emerald-600' : ''}>
+              {doneCount}/{total} topics
+            </span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {total > 0 ? (
-            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-zinc-100">
-              <div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-[width] duration-700 ease-out"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-zinc-500">{pct}%</span>
             </div>
           ) : null}
           <button
             type="button"
             onClick={removeSubject}
             aria-label={`Delete ${subject.name}`}
-            className="rounded-md p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+            className="rounded-lg p-1.5 text-zinc-300 transition-all hover:bg-rose-50 hover:text-rose-500 active:scale-90"
           >
             <IconTrash />
           </button>
@@ -154,14 +165,17 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
       </div>
 
       {subject.topics.length > 0 ? (
-        <ul className="border-t border-zinc-100 divide-y divide-zinc-100">
+        <ul className="divide-y divide-zinc-50 border-t border-zinc-100">
           {subject.topics.map((topic) => (
-            <li key={topic.id} className="flex items-center gap-3 px-5 py-2">
+            <li
+              key={topic.id}
+              className="group flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-zinc-50/60"
+            >
               <button
                 type="button"
                 onClick={() => cycleStatus(topic.id, topic.status)}
                 disabled={busy}
-                className={`rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors ${statusStyle(topic.status)}`}
+                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-all active:scale-90 ${statusStyle(topic.status)}`}
               >
                 {topic.status === 'todo'
                   ? 'To do'
@@ -170,8 +184,10 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
                     : 'Done'}
               </button>
               <span
-                className={`text-sm ${
-                  topic.status === 'done' ? 'text-zinc-400 line-through' : 'text-zinc-800'
+                className={`text-sm transition-all ${
+                  topic.status === 'done'
+                    ? 'text-zinc-400 line-through decoration-zinc-300'
+                    : 'text-zinc-800'
                 }`}
               >
                 {topic.name}
@@ -181,7 +197,7 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
         </ul>
       ) : null}
 
-      <div className="border-t border-zinc-100 px-5 py-2.5">
+      <div className="border-t border-zinc-100 px-5 py-3">
         {showAdd ? (
           <div className="flex gap-2">
             <input
@@ -191,13 +207,13 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
               onKeyDown={(e) => e.key === 'Enter' && addTopic()}
               placeholder="New topic"
               autoFocus
-              className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
             />
             <button
               type="button"
               onClick={addTopic}
               disabled={busy || !newTopic.trim()}
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:shadow-none"
             >
               Add
             </button>
@@ -206,7 +222,7 @@ export function SubjectCard({ subject, onChanged }: { subject: SubjectView; onCh
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-50 active:scale-95"
           >
             <IconPlus className="h-3.5 w-3.5" />
             Add topic
@@ -231,9 +247,15 @@ export function SubjectBoard({
   return (
     <div className="space-y-4">
       {subjects.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-zinc-300 bg-white px-5 py-8 text-center text-sm text-zinc-500">
-          No subjects yet. Add your first subject to start tracking your syllabus.
-        </p>
+        <div className="rounded-2xl border-2 border-dashed border-zinc-200 bg-white/60 px-5 py-12 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-2xl">
+            📚
+          </div>
+          <p className="text-sm font-semibold text-zinc-900">No subjects yet</p>
+          <p className="mx-auto mt-1 max-w-xs text-sm text-zinc-500">
+            Add your first subject to start tracking your syllabus and exam prep.
+          </p>
+        </div>
       ) : (
         subjects.map((s) => <SubjectCard key={s.id} subject={s} onChanged={refresh} />)
       )}
@@ -245,9 +267,9 @@ export function SubjectBoard({
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-dashed border-zinc-300 bg-white/60 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-sm active:scale-95"
           >
-            <IconPlus className="h-3.5 w-3.5" />
+            <IconPlus className="h-4 w-4" />
             Add subject
           </button>
         )

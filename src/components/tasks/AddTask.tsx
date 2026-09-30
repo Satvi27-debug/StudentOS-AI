@@ -28,6 +28,9 @@ export function AddTask() {
     }
   }
 
+  const inputCls =
+    'rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10'
+
   return (
     <div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -37,26 +40,26 @@ export function AddTask() {
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder="Add a task…"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={`flex-1 ${inputCls}`}
         />
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           aria-label="Due date"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={inputCls}
         />
         <button
           type="button"
           onClick={submit}
           disabled={busy || !title.trim()}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
           <IconPlus />
           Add
         </button>
       </div>
-      {error ? <p className="mt-1.5 text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1.5 text-xs text-rose-600">{error}</p> : null}
     </div>
   )
 }

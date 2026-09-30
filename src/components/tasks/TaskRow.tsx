@@ -20,6 +20,7 @@ export function TaskRow({ task }: { task: TaskView }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [justDone, setJustDone] = useState(false)
   const done = task.status === 'done'
 
   const toggle = async () => {
@@ -27,8 +28,15 @@ export function TaskRow({ task }: { task: TaskView }) {
     setBusy(true)
     const res = await toggleTaskAction(task.id)
     setBusy(false)
-    if (res.ok) router.refresh()
-    else setError(res.error ?? 'Could not update task.')
+    if (res.ok) {
+      if (!done) {
+        setJustDone(true)
+        setTimeout(() => setJustDone(false), 600)
+      }
+      router.refresh()
+    } else {
+      setError(res.error ?? 'Could not update task.')
+    }
   }
 
   const remove = async () => {
@@ -41,42 +49,68 @@ export function TaskRow({ task }: { task: TaskView }) {
   }
 
   return (
-    <div className="group flex items-start gap-3 px-2 py-2">
+    <div
+      className={`group flex items-start gap-3 rounded-xl px-2 py-2.5 transition-all duration-200 hover:bg-zinc-50 ${
+        justDone ? 'animate-wiggle' : ''
+      }`}
+    >
       <button
         type="button"
         onClick={toggle}
         disabled={busy}
         aria-label={done ? 'Mark as not done' : 'Mark as done'}
-        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${
+        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-200 active:scale-75 ${
           done
-            ? 'border-blue-600 bg-blue-600 text-white'
-            : 'border-zinc-300 bg-white hover:border-blue-500'
+            ? 'border-indigo-600 bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-500/30'
+            : 'border-zinc-300 bg-white hover:border-indigo-400 hover:shadow-sm'
         }`}
       >
         {done ? (
-          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-            <path d="m5 13 4 4L19 7" />
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path
+              d="m5 13 4 4L19 7"
+              strokeDasharray={26}
+              className="animate-check-draw"
+            />
           </svg>
         ) : null}
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className={`text-sm ${done ? 'text-zinc-400 line-through' : 'text-zinc-900'}`}>
+        <p
+          className={`text-sm transition-all duration-200 ${
+            done ? 'text-zinc-400 line-through decoration-zinc-300' : 'text-zinc-900'
+          }`}
+        >
           {task.title}
         </p>
         <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
           {task.dueDate ? (
-            <span className={task.overdue && !done ? 'font-medium text-red-600' : ''}>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 ${
+                task.overdue && !done
+                  ? 'bg-rose-50 font-medium text-rose-600'
+                  : 'bg-zinc-100 text-zinc-500'
+              }`}
+            >
               {task.overdue && !done ? 'Overdue · ' : ''}
               {formatDate(task.dueDate)}
             </span>
           ) : null}
           {task.source === 'ai' ? (
-            <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
+            <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[11px] font-semibold text-indigo-600">
               AI
             </span>
           ) : null}
-          {error ? <span className="text-red-600">{error}</span> : null}
+          {error ? <span className="text-rose-600">{error}</span> : null}
         </div>
       </div>
 
@@ -85,7 +119,7 @@ export function TaskRow({ task }: { task: TaskView }) {
         onClick={remove}
         disabled={busy}
         aria-label="Delete task"
-        className="rounded-md p-1 text-zinc-400 opacity-100 hover:bg-red-50 hover:text-red-600 sm:opacity-0 sm:group-hover:opacity-100"
+        className="rounded-lg p-1.5 text-zinc-300 transition-all hover:bg-rose-50 hover:text-rose-500 active:scale-90 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <IconTrash />
       </button>

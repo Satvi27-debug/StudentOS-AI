@@ -41,7 +41,7 @@ export function ProfileForm(initial: Props) {
     })
     setSaving(false)
     if (res.ok) {
-      setStatus({ type: 'ok', text: 'Profile saved.' })
+      setStatus({ type: 'ok', text: 'Profile saved ✓' })
       router.refresh()
     } else {
       setStatus({ type: 'error', text: res.error ?? 'Could not save profile.' })
@@ -53,13 +53,13 @@ export function ProfileForm(initial: Props) {
       <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
         {FIELDS.map((f) => (
           <label key={f.key} className={`block ${f.full ? 'sm:col-span-2' : ''}`}>
-            <span className="mb-1 block text-xs font-medium text-zinc-600">{f.label}</span>
+            <span className="mb-1.5 block text-xs font-semibold text-zinc-500">{f.label}</span>
             <input
               type="text"
               value={values[f.key]}
               onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
               placeholder={f.placeholder}
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
             />
           </label>
         ))}
@@ -69,12 +69,16 @@ export function ProfileForm(initial: Props) {
           type="button"
           onClick={save}
           disabled={saving}
-          className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95 disabled:opacity-40 disabled:shadow-none"
         >
           {saving ? 'Saving…' : 'Save profile'}
         </button>
         {status ? (
-          <span className={status.type === 'ok' ? 'text-sm text-green-700' : 'text-sm text-red-600'}>
+          <span
+            className={`text-sm font-medium ${
+              status.type === 'ok' ? 'text-emerald-600' : 'text-rose-600'
+            }`}
+          >
             {status.text}
           </span>
         ) : null}

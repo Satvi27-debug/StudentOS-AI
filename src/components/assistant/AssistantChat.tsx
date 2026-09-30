@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { IconBot, IconSend, IconSparkles } from '@/components/icons'
 
 type ToolEvent = { name: string; args?: string; result?: unknown }
 
@@ -24,6 +25,13 @@ const AGENT_LABELS: Record<string, string> = {
   general: 'StudentOS',
 }
 
+const AGENT_STYLES: Record<string, string> = {
+  study: 'from-emerald-500 to-teal-500',
+  productivity: 'from-amber-500 to-orange-500',
+  career: 'from-violet-500 to-purple-500',
+  general: 'from-indigo-500 to-violet-500',
+}
+
 const SUGGESTIONS = [
   'Plan my week for my exam',
   'What should I learn next for my career goal?',
@@ -34,6 +42,20 @@ function uid() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : String(Math.random()).slice(2)
+}
+
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1 px-1 py-1">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce-dot"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+    </span>
+  )
 }
 
 export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
@@ -173,7 +195,7 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
   return (
     <div className="flex h-[calc(100dvh-6rem)] flex-col lg:h-[calc(100dvh-5rem)]">
       {contextUnavailable ? (
-        <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
           Live student data could not be loaded. Set up PostgreSQL (.env + docker compose up -d)
           to let the agents personalise answers.
         </div>
@@ -181,21 +203,28 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
 
       <div className="flex-1 space-y-5 overflow-y-auto pb-4">
         {messages.length === 0 && !busy ? (
-          <div className="pt-8">
-            <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
-              Ask anything about your student life
+          <div className="pt-10 animate-fade-in-up">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30 animate-float">
+              <IconBot className="h-7 w-7" />
+            </div>
+            <h1 className="text-center text-2xl font-bold tracking-tight text-zinc-900">
+              Ask anything about your{' '}
+              <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                student life
+              </span>
             </h1>
-            <p className="mt-1 max-w-xl text-sm text-zinc-500">
+            <p className="mx-auto mt-2 max-w-md text-center text-sm text-zinc-500">
               StudentOS routes your request to the right agent — study, productivity, or career —
               and turns AI-generated plans into real tasks.
             </p>
-            <div className="mt-5 flex max-w-xl flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
+            <div className="mx-auto mt-6 flex max-w-lg flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s, i) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => void send(s)}
-                  className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-left text-sm text-zinc-600 hover:border-blue-300 hover:text-blue-700"
+                  className="rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-left text-sm text-zinc-600 shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-700 hover:shadow-md active:scale-95 animate-fade-in-up"
+                  style={{ animationDelay: `${0.1 + i * 0.08}s` }}
                 >
                   {s}
                 </button>
@@ -206,17 +235,19 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
 
         {messages.map((m) =>
           m.role === 'user' ? (
-            <div key={m.id} className="flex justify-end">
-              <div className="max-w-[85%] rounded-lg bg-blue-50 px-4 py-2.5 text-sm text-zinc-900 sm:max-w-[70%]">
+            <div key={m.id} className="flex justify-end animate-scale-in">
+              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2.5 text-sm text-white shadow-md shadow-indigo-500/20 sm:max-w-[70%]">
                 {m.text}
               </div>
             </div>
           ) : (
-            <div key={m.id} className="max-w-[95%]">
+            <div key={m.id} className="max-w-[95%] animate-fade-in-up">
               {m.agent ? (
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm ${AGENT_STYLES[m.agent] ?? AGENT_STYLES.general}`}
+                  >
+                    <IconSparkles className="h-3 w-3" />
                     {AGENT_LABELS[m.agent] ?? m.agent}
                   </span>
                   {m.reasoning ? (
@@ -226,30 +257,35 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
               ) : null}
 
               {m.text ? (
-                <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-800">
+                <div className="whitespace-pre-wrap rounded-2xl rounded-tl-md border border-zinc-200/80 bg-white px-4 py-3 text-[15px] leading-relaxed text-zinc-800 shadow-sm">
                   {m.text}
                 </div>
               ) : m.done ? null : (
-                <p className="text-sm text-zinc-400">Thinking…</p>
+                <div className="inline-flex items-center rounded-2xl rounded-tl-md border border-zinc-200/80 bg-white px-4 py-3 shadow-sm">
+                  <TypingDots />
+                </div>
               )}
 
               {m.tools.length > 0 ? (
-                <ul className="mt-2 space-y-1">
+                <ul className="mt-2 space-y-1.5">
                   {m.tools.map((t, i) => {
                     const created = (t.result as { created?: number } | undefined)?.created ?? 0
                     return (
                       <li
                         key={`${t.name}-${i}`}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-600"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-600 shadow-sm"
                       >
                         <span className="font-medium text-zinc-800">{t.name}</span>
                         {created > 0 ? (
-                          <span className="text-green-700">
+                          <span className="font-medium text-emerald-600">
                             {created} task{created > 1 ? 's' : ''} created
                           </span>
                         ) : null}
                         {created > 0 ? (
-                          <Link href="/tasks" className="text-blue-700 underline underline-offset-2">
+                          <Link
+                            href="/tasks"
+                            className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-700"
+                          >
                             View tasks
                           </Link>
                         ) : null}
@@ -260,12 +296,12 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
               ) : null}
 
               {m.warning ? (
-                <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
                   {m.warning}
                 </p>
               ) : null}
               {m.error ? (
-                <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
                   {m.error}
                 </div>
               ) : null}
@@ -276,7 +312,7 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
       </div>
 
       {notConfigured ? (
-        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <p className="font-semibold">AI Assistant is not configured</p>
           <p className="mt-1">
             Set{' '}
@@ -299,7 +335,7 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
         </div>
       ) : null}
 
-      <form onSubmit={(e) => void submit(e)} className="flex gap-2">
+      <form onSubmit={(e) => void submit(e)} className="flex items-end gap-2">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -309,16 +345,21 @@ export function AssistantChat({ initialQuery }: { initialQuery?: string }) {
               void submit()
             }
           }}
-          rows={2}
+          rows={1}
           placeholder="Ask StudentOS…"
-          className="flex-1 resize-none rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="max-h-32 flex-1 resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm transition-all placeholder:text-zinc-400 focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          aria-label="Send message"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/35 active:scale-90 disabled:opacity-40 disabled:shadow-none"
         >
-          {busy ? '…' : 'Send'}
+          {busy ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          ) : (
+            <IconSend className="h-4 w-4" />
+          )}
         </button>
       </form>
     </div>
