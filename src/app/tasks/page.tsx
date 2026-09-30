@@ -13,7 +13,7 @@ type Sort = 'dueDate' | 'priority' | 'category' | 'title'
 const PRIORITY_ORDER: Record<Priority, number> = { high: 0, medium: 1, low: 2 }
 
 export default function TasksPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const actions = useStudentActions()
   const [filter, setFilter] = useState<Filter>('all')
   const [sort, setSort] = useState<Sort>('dueDate')
@@ -23,6 +23,22 @@ export default function TasksPage() {
   const [editPriority, setEditPriority] = useState<Priority>('medium')
   const [editCategory, setEditCategory] = useState<TaskCategory>('personal')
   const [editDueDate, setEditDueDate] = useState('')
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const today = todayKey()
 

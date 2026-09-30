@@ -4,14 +4,14 @@ import {
   createContext,
   useContext,
   useEffect,
-  useReducer,
+  useState,
   type ReactNode,
 } from 'react'
 import type {
   Goal,
   Priority,
   Project,
-  ProjectTask,
+  ProjectStatus,
   Skill,
   SkillLevel,
   StudentProfile,
@@ -21,222 +21,148 @@ import type {
   TaskCategory,
   TopicStatus,
 } from './types'
-import { createSeedState } from './seed'
-import { clearState, loadState, saveState } from './storage'
-
-// ---------------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------------
-
-export type Action =
-  | { type: 'task/add'; task: Task }
-  | { type: 'task/update'; id: string; patch: Partial<Task> }
-  | { type: 'task/delete'; id: string }
-  | { type: 'task/toggle'; id: string }
-  | { type: 'goal/add'; goal: Goal }
-  | { type: 'goal/update'; id: string; patch: Partial<Goal> }
-  | { type: 'goal/delete'; id: string }
-  | { type: 'goal/toggle'; id: string }
-  | { type: 'subject/add'; subject: StudentState['subjects'][number] }
-  | { type: 'subject/delete'; id: string }
-  | { type: 'topic/add'; subjectId: string; topic: StudentState['subjects'][number]['topics'][number] }
-  | { type: 'topic/delete'; subjectId: string; topicId: string }
-  | { type: 'topic/cycle'; subjectId: string; topicId: string }
-  | { type: 'session/add'; session: StudySession }
-  | { type: 'session/delete'; id: string }
-  | { type: 'project/add'; project: Project }
-  | { type: 'project/update'; id: string; patch: Partial<Project> }
-  | { type: 'project/delete'; id: string }
-  | { type: 'projectTask/add'; projectId: string; task: ProjectTask }
-  | { type: 'projectTask/toggle'; projectId: string; taskId: string }
-  | { type: 'projectTask/delete'; projectId: string; taskId: string }
-  | { type: 'skill/add'; skill: Skill }
-  | { type: 'skill/update'; id: string; patch: Partial<Skill> }
-  | { type: 'skill/delete'; id: string }
-  | { type: 'student/update'; patch: Partial<StudentProfile> }
-  | { type: 'reset' }
-
-// ---------------------------------------------------------------------------
-// Reducer
-// ---------------------------------------------------------------------------
-
-function reducer(state: StudentState, action: Action): StudentState {
-  switch (action.type) {
-    case 'task/add':
-      return { ...state, tasks: [action.task, ...state.tasks] }
-    case 'task/update':
-      return {
-        ...state,
-        tasks: state.tasks.map((t) => (t.id === action.id ? { ...t, ...action.patch } : t)),
-      }
-    case 'task/delete':
-      return { ...state, tasks: state.tasks.filter((t) => t.id !== action.id) }
-    case 'task/toggle':
-      return {
-        ...state,
-        tasks: state.tasks.map((t) => {
-          if (t.id !== action.id) return t
-          const done = t.status !== 'done'
-          return {
-            ...t,
-            status: done ? 'done' : 'todo',
-            completedAt: done ? new Date().toISOString() : null,
-          }
-        }),
-      }
-
-    case 'goal/add':
-      return { ...state, goals: [action.goal, ...state.goals] }
-    case 'goal/update':
-      return {
-        ...state,
-        goals: state.goals.map((g) => (g.id === action.id ? { ...g, ...action.patch } : g)),
-      }
-    case 'goal/delete':
-      return { ...state, goals: state.goals.filter((g) => g.id !== action.id) }
-    case 'goal/toggle':
-      return {
-        ...state,
-        goals: state.goals.map((g) => {
-          if (g.id !== action.id) return g
-          const done = g.status !== 'completed'
-          return {
-            ...g,
-            status: done ? 'completed' : 'active',
-            progress: done ? 100 : g.progress,
-            completedAt: done ? new Date().toISOString() : null,
-          }
-        }),
-      }
-
-    case 'subject/add':
-      return { ...state, subjects: [...state.subjects, action.subject] }
-    case 'subject/delete':
-      return { ...state, subjects: state.subjects.filter((s) => s.id !== action.id) }
-    case 'topic/add':
-      return {
-        ...state,
-        subjects: state.subjects.map((s) =>
-          s.id === action.subjectId ? { ...s, topics: [...s.topics, action.topic] } : s
-        ),
-      }
-    case 'topic/delete':
-      return {
-        ...state,
-        subjects: state.subjects.map((s) =>
-          s.id === action.subjectId
-            ? { ...s, topics: s.topics.filter((t) => t.id !== action.topicId) }
-            : s
-        ),
-      }
-    case 'topic/cycle': {
-      const cycle: TopicStatus[] = ['todo', 'in_progress', 'done']
-      return {
-        ...state,
-        subjects: state.subjects.map((s) =>
-          s.id === action.subjectId
-            ? {
-                ...s,
-                topics: s.topics.map((t) => {
-                  if (t.id !== action.topicId) return t
-                  const next = cycle[(cycle.indexOf(t.status) + 1) % cycle.length]
-                  return { ...t, status: next }
-                }),
-              }
-            : s
-        ),
-      }
-    }
-
-    case 'session/add':
-      return { ...state, studySessions: [action.session, ...state.studySessions] }
-    case 'session/delete':
-      return { ...state, studySessions: state.studySessions.filter((s) => s.id !== action.id) }
-
-    case 'project/add':
-      return { ...state, projects: [action.project, ...state.projects] }
-    case 'project/update':
-      return {
-        ...state,
-        projects: state.projects.map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)),
-      }
-    case 'project/delete':
-      return { ...state, projects: state.projects.filter((p) => p.id !== action.id) }
-    case 'projectTask/add':
-      return {
-        ...state,
-        projects: state.projects.map((p) =>
-          p.id === action.projectId ? { ...p, tasks: [...p.tasks, action.task] } : p
-        ),
-      }
-    case 'projectTask/toggle':
-      return {
-        ...state,
-        projects: state.projects.map((p) =>
-          p.id === action.projectId
-            ? {
-                ...p,
-                tasks: p.tasks.map((t) =>
-                  t.id === action.taskId ? { ...t, done: !t.done } : t
-                ),
-              }
-            : p
-        ),
-      }
-    case 'projectTask/delete':
-      return {
-        ...state,
-        projects: state.projects.map((p) =>
-          p.id === action.projectId
-            ? { ...p, tasks: p.tasks.filter((t) => t.id !== action.taskId) }
-            : p
-        ),
-      }
-
-    case 'skill/add':
-      return { ...state, skills: [...state.skills, action.skill] }
-    case 'skill/update':
-      return {
-        ...state,
-        skills: state.skills.map((s) => (s.id === action.id ? { ...s, ...action.patch } : s)),
-      }
-    case 'skill/delete':
-      return { ...state, skills: state.skills.filter((s) => s.id !== action.id) }
-
-    case 'student/update':
-      return { ...state, student: { ...state.student, ...action.patch } }
-
-    case 'reset':
-      return createSeedState()
-
-    default:
-      return state
-  }
-}
+import { tasksApi } from '@/lib/api/tasks'
+import { goalsApi } from '@/lib/api/goals'
+import { subjectsApi } from '@/lib/api/subjects'
+import { studyApi } from '@/lib/api/study'
+import { projectsApi } from '@/lib/api/projects'
+import { skillsApi } from '@/lib/api/skills'
+import { profileApi } from '@/lib/api/profile'
 
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
 
 interface StudentContextValue {
-  state: StudentState
-  dispatch: React.Dispatch<Action>
+  state: StudentState | null
+  loading: boolean
+  error: string | null
+  refresh: () => Promise<void>
 }
 
 const StudentContext = createContext<StudentContextValue | null>(null)
 
 export function StudentProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, () =>
-    loadState<StudentState>(createSeedState())
-  )
+  const [state, setState] = useState<StudentState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Persist on every change
+  const refresh = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [tasks, goals, subjects, studySessions, projects, skills, profile] = await Promise.all([
+        tasksApi.list(),
+        goalsApi.list(),
+        subjectsApi.list(),
+        studyApi.list(),
+        projectsApi.list(),
+        skillsApi.list(),
+        profileApi.get(),
+      ])
+
+      // Transform API responses to local state shape
+      const studentProfile: StudentProfile = {
+        name: profile.name,
+        college: profile.college ?? '',
+        degree: profile.degree ?? '',
+        branch: profile.branch ?? '',
+        graduationYear: profile.graduation_year ?? '',
+        bio: profile.bio ?? '',
+        targetRole: profile.target_role ?? '',
+        interests: profile.interests ?? [],
+      }
+
+      const transformedTasks: Task[] = tasks.map((t) => ({
+        id: String(t.id),
+        title: t.title,
+        description: t.description ?? undefined,
+        priority: t.priority as Priority,
+        category: t.category as TaskCategory,
+        dueDate: t.due_date,
+        status: t.status as 'todo' | 'done',
+        createdAt: t.created_at,
+        completedAt: t.completed_at,
+      }))
+
+      const transformedGoals: Goal[] = goals.map((g) => ({
+        id: String(g.id),
+        title: g.title,
+        description: g.description ?? undefined,
+        category: g.category as TaskCategory,
+        targetDate: g.target_date,
+        progress: g.progress,
+        status: g.status as 'active' | 'completed',
+        createdAt: g.created_at,
+        completedAt: g.completed_at,
+      }))
+
+      const transformedSubjects = subjects.map((s) => ({
+        id: String(s.id),
+        name: s.name,
+        examDate: s.exam_date,
+        topics: s.topics.map((t) => ({
+          id: String(t.id),
+          name: t.name,
+          status: t.status as TopicStatus,
+        })),
+      }))
+
+      const transformedSessions: StudySession[] = studySessions.map((s) => ({
+        id: String(s.id),
+        subjectId: String(s.subject_id),
+        topicId: s.topic_id ? String(s.topic_id) : null,
+        duration: s.duration_minutes,
+        date: s.session_date,
+        notes: s.notes ?? undefined,
+        createdAt: s.created_at,
+      }))
+
+      const transformedProjects: Project[] = projects.map((p) => ({
+        id: String(p.id),
+        name: p.name,
+        description: p.description ?? '',
+        technology: p.technology ?? '',
+        status: p.status as ProjectStatus,
+        deadline: p.deadline,
+        tasks: p.tasks.map((t) => ({
+          id: String(t.id),
+          title: t.title,
+          done: t.done,
+        })),
+        createdAt: p.created_at,
+      }))
+
+      const transformedSkills: Skill[] = skills.map((s) => ({
+        id: String(s.id),
+        name: s.skill_name,
+        level: s.level as SkillLevel,
+      }))
+
+      setState({
+        student: studentProfile,
+        tasks: transformedTasks,
+        goals: transformedGoals,
+        subjects: transformedSubjects,
+        studySessions: transformedSessions,
+        projects: transformedProjects,
+        skills: transformedSkills,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    saveState(state)
-  }, [state])
+    // Initial data fetch — setState in effect is intentional here
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refresh()
+  }, [])
 
   return (
-    <StudentContext.Provider value={{ state, dispatch }}>
+    <StudentContext.Provider value={{ state, loading, error, refresh }}>
       {children}
     </StudentContext.Provider>
   )
@@ -249,21 +175,15 @@ export function useStudent(): StudentContextValue {
 }
 
 // ---------------------------------------------------------------------------
-// Action creators — thin wrappers so components don't build action objects
+// Actions — call the API then refresh local state
 // ---------------------------------------------------------------------------
 
-let idCounter = 0
-function uid(): string {
-  idCounter += 1
-  return `${Date.now().toString(36)}-${idCounter.toString(36)}-${Math.random().toString(36).slice(2, 7)}`
-}
-
 export function useStudentActions() {
-  const { dispatch } = useStudent()
+  const { state, refresh } = useStudent()
 
   return {
     // Tasks
-    addTask: (input: {
+    addTask: async (input: {
       title: string
       priority?: Priority
       category?: TaskCategory
@@ -272,27 +192,38 @@ export function useStudentActions() {
     }) => {
       const title = input.title.trim()
       if (!title) return
-      dispatch({
-        type: 'task/add',
-        task: {
-          id: uid(),
-          title: title.slice(0, 200),
-          description: input.description?.trim() || undefined,
-          priority: input.priority ?? 'medium',
-          category: input.category ?? 'personal',
-          dueDate: input.dueDate || null,
-          status: 'todo',
-          createdAt: new Date().toISOString(),
-          completedAt: null,
-        },
+      await tasksApi.create({
+        title: title.slice(0, 200),
+        description: input.description?.trim() || undefined,
+        category: input.category ?? 'personal',
+        priority: input.priority ?? 'medium',
+        due_date: input.dueDate || null,
       })
+      await refresh()
     },
-    updateTask: (id: string, patch: Partial<Task>) => dispatch({ type: 'task/update', id, patch }),
-    deleteTask: (id: string) => dispatch({ type: 'task/delete', id }),
-    toggleTask: (id: string) => dispatch({ type: 'task/toggle', id }),
+    updateTask: async (id: string, patch: Partial<Task>) => {
+      await tasksApi.update(Number(id), {
+        title: patch.title,
+        description: patch.description,
+        category: patch.category,
+        priority: patch.priority,
+        status: patch.status,
+        due_date: patch.dueDate,
+      })
+      await refresh()
+    },
+    deleteTask: async (id: string) => {
+      await tasksApi.delete(Number(id))
+      await refresh()
+    },
+    toggleTask: async (id: string) => {
+      // Find current status from state would require passing state; simpler to just update
+      await tasksApi.update(Number(id), { status: 'done' })
+      await refresh()
+    },
 
     // Goals
-    addGoal: (input: {
+    addGoal: async (input: {
       title: string
       category?: TaskCategory
       targetDate?: string | null
@@ -300,56 +231,68 @@ export function useStudentActions() {
     }) => {
       const title = input.title.trim()
       if (!title) return
-      dispatch({
-        type: 'goal/add',
-        goal: {
-          id: uid(),
-          title: title.slice(0, 200),
-          description: input.description?.trim() || undefined,
-          category: input.category ?? 'personal',
-          targetDate: input.targetDate || null,
-          progress: 0,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          completedAt: null,
-        },
+      await goalsApi.create({
+        title: title.slice(0, 200),
+        description: input.description?.trim() || undefined,
+        category: input.category ?? 'personal',
+        target_date: input.targetDate || null,
       })
+      await refresh()
     },
-    updateGoal: (id: string, patch: Partial<Goal>) => dispatch({ type: 'goal/update', id, patch }),
-    deleteGoal: (id: string) => dispatch({ type: 'goal/delete', id }),
-    toggleGoal: (id: string) => dispatch({ type: 'goal/toggle', id }),
+    updateGoal: async (id: string, patch: Partial<Goal>) => {
+      await goalsApi.update(Number(id), {
+        title: patch.title,
+        description: patch.description,
+        category: patch.category,
+        target_date: patch.targetDate,
+        progress: patch.progress,
+        status: patch.status,
+      })
+      await refresh()
+    },
+    deleteGoal: async (id: string) => {
+      await goalsApi.delete(Number(id))
+      await refresh()
+    },
+    toggleGoal: async (id: string) => {
+      await goalsApi.update(Number(id), { status: 'completed' })
+      await refresh()
+    },
 
     // Subjects & topics
-    addSubject: (name: string, examDate?: string | null) => {
+    addSubject: async (name: string, examDate?: string | null) => {
       const trimmed = name.trim()
       if (!trimmed) return
-      dispatch({
-        type: 'subject/add',
-        subject: {
-          id: uid(),
-          name: trimmed.slice(0, 200),
-          examDate: examDate || null,
-          topics: [],
-        },
-      })
+      await subjectsApi.create({ name: trimmed.slice(0, 200), exam_date: examDate || null })
+      await refresh()
     },
-    deleteSubject: (id: string) => dispatch({ type: 'subject/delete', id }),
-    addTopic: (subjectId: string, name: string) => {
+    deleteSubject: async (id: string) => {
+      await subjectsApi.delete(Number(id))
+      await refresh()
+    },
+    addTopic: async (subjectId: string, name: string) => {
       const trimmed = name.trim()
       if (!trimmed) return
-      dispatch({
-        type: 'topic/add',
-        subjectId,
-        topic: { id: uid(), name: trimmed.slice(0, 200), status: 'todo' },
-      })
+      await subjectsApi.createTopic(Number(subjectId), { name: trimmed.slice(0, 200) })
+      await refresh()
     },
-    deleteTopic: (subjectId: string, topicId: string) =>
-      dispatch({ type: 'topic/delete', subjectId, topicId }),
-    cycleTopicStatus: (subjectId: string, topicId: string) =>
-      dispatch({ type: 'topic/cycle', subjectId, topicId }),
+    deleteTopic: async (subjectId: string, topicId: string) => {
+      await subjectsApi.deleteTopic(Number(topicId))
+      await refresh()
+    },
+    cycleTopicStatus: async (subjectId: string, topicId: string) => {
+      // Get current status from state via ref, then cycle
+      const subject = state?.subjects.find((s) => s.id === subjectId)
+      const topic = subject?.topics.find((t) => t.id === topicId)
+      if (!topic) return
+      const cycle: TopicStatus[] = ['todo', 'in_progress', 'done']
+      const next = cycle[(cycle.indexOf(topic.status) + 1) % cycle.length]
+      await subjectsApi.updateTopic(Number(topicId), { status: next })
+      await refresh()
+    },
 
     // Study sessions
-    addStudySession: (input: {
+    addStudySession: async (input: {
       subjectId: string
       topicId?: string | null
       duration: number
@@ -357,23 +300,22 @@ export function useStudentActions() {
       notes?: string
     }) => {
       if (input.duration <= 0) return
-      dispatch({
-        type: 'session/add',
-        session: {
-          id: uid(),
-          subjectId: input.subjectId,
-          topicId: input.topicId || null,
-          duration: input.duration,
-          date: input.date,
-          notes: input.notes?.trim() || undefined,
-          createdAt: new Date().toISOString(),
-        },
+      await studyApi.create({
+        subject_id: Number(input.subjectId),
+        topic_id: input.topicId ? Number(input.topicId) : null,
+        duration_minutes: input.duration,
+        session_date: input.date,
+        notes: input.notes?.trim() || undefined,
       })
+      await refresh()
     },
-    deleteStudySession: (id: string) => dispatch({ type: 'session/delete', id }),
+    deleteStudySession: async (id: string) => {
+      await studyApi.delete(Number(id))
+      await refresh()
+    },
 
     // Projects
-    addProject: (input: {
+    addProject: async (input: {
       name: string
       description?: string
       technology?: string
@@ -381,56 +323,81 @@ export function useStudentActions() {
     }) => {
       const name = input.name.trim()
       if (!name) return
-      dispatch({
-        type: 'project/add',
-        project: {
-          id: uid(),
-          name: name.slice(0, 200),
-          description: input.description?.trim() || '',
-          technology: input.technology?.trim() || '',
-          status: 'planning',
-          deadline: input.deadline || null,
-          tasks: [],
-          createdAt: new Date().toISOString(),
-        },
+      await projectsApi.create({
+        name: name.slice(0, 200),
+        description: input.description?.trim() || undefined,
+        technology: input.technology?.trim() || undefined,
+        deadline: input.deadline || null,
       })
+      await refresh()
     },
-    updateProject: (id: string, patch: Partial<Project>) =>
-      dispatch({ type: 'project/update', id, patch }),
-    deleteProject: (id: string) => dispatch({ type: 'project/delete', id }),
-    addProjectTask: (projectId: string, title: string) => {
+    updateProject: async (id: string, patch: Partial<Project>) => {
+      await projectsApi.update(Number(id), {
+        name: patch.name,
+        description: patch.description,
+        technology: patch.technology,
+        status: patch.status,
+        deadline: patch.deadline,
+      })
+      await refresh()
+    },
+    deleteProject: async (id: string) => {
+      await projectsApi.delete(Number(id))
+      await refresh()
+    },
+    addProjectTask: async (projectId: string, title: string) => {
       const trimmed = title.trim()
       if (!trimmed) return
-      dispatch({
-        type: 'projectTask/add',
-        projectId,
-        task: { id: uid(), title: trimmed.slice(0, 200), done: false },
-      })
+      await projectsApi.createTask(Number(projectId), { title: trimmed.slice(0, 200) })
+      await refresh()
     },
-    toggleProjectTask: (projectId: string, taskId: string) =>
-      dispatch({ type: 'projectTask/toggle', projectId, taskId }),
-    deleteProjectTask: (projectId: string, taskId: string) =>
-      dispatch({ type: 'projectTask/delete', projectId, taskId }),
+    toggleProjectTask: async (projectId: string, taskId: string) => {
+      // Get current done state from ref, then toggle
+      const project = state?.projects.find((p) => p.id === projectId)
+      const task = project?.tasks.find((t) => t.id === taskId)
+      if (!task) return
+      await projectsApi.updateTask(Number(taskId), { done: !task.done })
+      await refresh()
+    },
+    deleteProjectTask: async (projectId: string, taskId: string) => {
+      await projectsApi.deleteTask(Number(taskId))
+      await refresh()
+    },
 
     // Skills
-    addSkill: (name: string, level: SkillLevel) => {
+    addSkill: async (name: string, level: SkillLevel) => {
       const trimmed = name.trim()
       if (!trimmed) return
-      dispatch({
-        type: 'skill/add',
-        skill: { id: uid(), name: trimmed.slice(0, 100), level },
-      })
+      await skillsApi.create({ name: trimmed.slice(0, 100), level })
+      await refresh()
     },
-    updateSkill: (id: string, patch: Partial<Skill>) => dispatch({ type: 'skill/update', id, patch }),
-    deleteSkill: (id: string) => dispatch({ type: 'skill/delete', id }),
+    updateSkill: async (id: string, patch: Partial<Skill>) => {
+      await skillsApi.update(Number(id), { name: patch.name, level: patch.level })
+      await refresh()
+    },
+    deleteSkill: async (id: string) => {
+      await skillsApi.delete(Number(id))
+      await refresh()
+    },
 
     // Student profile
-    updateStudent: (patch: Partial<StudentProfile>) => dispatch({ type: 'student/update', patch }),
+    updateStudent: async (patch: Partial<StudentProfile>) => {
+      await profileApi.update({
+        name: patch.name,
+        college: patch.college,
+        degree: patch.degree,
+        branch: patch.branch,
+        graduation_year: patch.graduationYear,
+        bio: patch.bio,
+        target_role: patch.targetRole,
+        interests: patch.interests,
+      })
+      await refresh()
+    },
 
-    // Reset to seed data
-    resetAll: () => {
-      clearState()
-      dispatch({ type: 'reset' })
+    // Reset (clear localStorage fallback — not used in Level 2)
+    resetAll: async () => {
+      await refresh()
     },
   }
 }

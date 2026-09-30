@@ -2,15 +2,13 @@
 
 An AI-powered **student operating system**: one dashboard that brings together study, tasks, career, and an AI assistant that actually knows your context — and converts its plans into real tasks.
 
-Built with **Next.js 16 + TypeScript + Tailwind CSS**.
+Built with **Next.js 16 + TypeScript + Tailwind CSS + FastAPI + PostgreSQL**.
 
 ---
 
-## Current Stage: Level 1
+## Current Stage: Level 2
 
-**No AI. No database. No external APIs. No authentication.**
-
-Everything runs locally using application state and structured seed data. The app persists to `localStorage` so your data survives a refresh.
+**Backend + Database.** The app now stores all student data in PostgreSQL through a FastAPI backend. No AI yet — that comes in Level 3.
 
 ### Implemented
 
@@ -23,28 +21,65 @@ Everything runs locally using application state and structured seed data. The ap
 - **Skills** — add/edit/remove skills with proficiency levels
 - **Career Profile** — target role, interests, skills, projects
 - **Productivity Overview** — completed/pending tasks, goals, study hours, project stats
-- **Local Persistence** — all data saved to `localStorage`, survives refresh
+- **Backend API** — FastAPI with REST endpoints for all entities
+- **Database** — PostgreSQL with SQLAlchemy ORM + Alembic migrations
 - **Seed Data** — realistic starter data (Satvendra, B.Tech, AI/ML focus)
 
 ### Not Yet Implemented
 
-- AI assistant (Level 2)
-- Backend / database (Level 2)
-- External datasets (Level 2)
-- External APIs (Level 2)
-- Authentication (Level 2)
+- AI assistant (Level 3)
+- External datasets (Level 4)
+- External APIs (Level 4)
+- Authentication (Level 3/4)
 
 ---
 
-## Running it
+## Running the Project
 
-### 1. Install
+### 1. Clone and install frontend
 
 ```bash
 npm install
 ```
 
-### 2. Run
+### 2. Start PostgreSQL
+
+```bash
+docker compose up -d
+```
+
+### 3. Set up the backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+### 4. Run migrations
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+### 5. Seed development data
+
+```bash
+cd backend
+python seed.py
+```
+
+### 6. Start the backend
+
+```bash
+cd backend
+uvicorn app.main:app --reload
+```
+
+The API runs at http://localhost:8000. Visit http://localhost:8000/docs for interactive API documentation.
+
+### 7. Start the frontend
 
 ```bash
 npm run dev
@@ -52,87 +87,102 @@ npm run dev
 
 Open http://localhost:3000.
 
-### 3. Reset to seed data
-
-If you want to start fresh, open the browser console and run:
-
-```js
-localStorage.removeItem('studentos-state-v1')
-location.reload()
-```
-
 ---
 
 ## Architecture
 
 ```
-src/
-├─ app/                    # Next.js App Router
-│  ├─ (dashboard, study, tasks, goals, projects, skills, career, profile, productivity, assistant, …)
-│  └─ api/assistant/       # NDJSON streaming chat endpoint (Level 2)
-├─ lib/
-│  ├─ local/               # Level 1 local data layer
-│  │  ├─ types.ts          # TypeScript interfaces
-│  │  ├─ seed.ts           # Realistic starter data
-│  │  ├─ storage.ts        # localStorage abstraction
-│  │  ├─ store.tsx         # Central state (React Context + useReducer)
-│  │  └─ selectors.ts      # Derived calculations
-│  ├─ mastra/              # AI agents (Level 2)
-│  ├─ db/                  # Drizzle schema + queries (Level 2)
-│  └─ ...
-├─ components/             # UI components
-└─ ...
+Frontend (Next.js)
+    ↓
+API Service Layer (src/lib/api/)
+    ↓
+FastAPI Backend (backend/)
+    ↓
+PostgreSQL
 ```
 
-### Data flow (Level 1)
+### Data flow
 
 ```
 UI Components
     ↓
 useStudent() / useStudentActions()
     ↓
-StudentProvider (React Context + useReducer)
+API Client (src/lib/api/client.ts)
     ↓
-localStorage (persistence)
-```
-
-### Future architecture
-
-```
-LEVEL 2:  UI → Application Services → Backend → Database
-LEVEL 3:  StudentOS → AI Orchestrator → Study/Coding/Career/Research/Project AI
+FastAPI REST API
+    ↓
+PostgreSQL
 ```
 
 ---
 
 ## Project Structure
 
-| Area | Status |
-| --- | --- |
-| **Dashboard** | ✅ Level 1 |
-| **Tasks** | ✅ Level 1 |
-| **Goals** | ✅ Level 1 |
-| **Study** | ✅ Level 1 |
-| **Study Sessions** | ✅ Level 1 |
-| **Projects** | ✅ Level 1 |
-| **Skills** | ✅ Level 1 |
-| **Career Profile** | ✅ Level 1 |
-| **Productivity** | ✅ Level 1 |
-| **AI Assistant** | 🔜 Level 2 |
-| **Coding Agent** | 🔜 Level 2 |
-| **Projects Agent** | 🔜 Level 2 |
-| **Opportunities Agent** | 🔜 Level 2 |
-| **Research Agent** | 🔜 Level 2 |
+```
+├── src/                       # Frontend (Next.js)
+│   ├── app/                   # Pages
+│   ├── components/            # UI components
+│   ├── lib/
+│   │   ├── api/               # API client + service functions
+│   │   └── local/             # Local state (Level 1, now uses API)
+│   └── ...
+├── backend/                   # Backend (FastAPI)
+│   ├── app/
+│   │   ├── main.py            # FastAPI app entry point
+│   │   ├── config.py          # Settings
+│   │   ├── database.py        # SQLAlchemy engine + session
+│   │   ├── models/            # ORM models
+│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── routers/           # API routes
+│   │   └── services/          # Business logic
+│   ├── migrations/            # Alembic migrations
+│   ├── tests/                 # Pytest test suite
+│   ├── seed.py                # Development data seeder
+│   ├── requirements.txt
+│   └── .env.example
+├── docker-compose.yml         # PostgreSQL
+└── README.md
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/api/tasks` | List tasks (filter, sort) |
+| POST | `/api/tasks` | Create task |
+| GET | `/api/tasks/{id}` | Get task |
+| PUT | `/api/tasks/{id}` | Update task |
+| DELETE | `/api/tasks/{id}` | Delete task |
+| GET | `/api/goals` | List goals |
+| POST | `/api/goals` | Create goal |
+| PUT | `/api/goals/{id}` | Update goal |
+| DELETE | `/api/goals/{id}` | Delete goal |
+| GET | `/api/subjects` | List subjects |
+| POST | `/api/subjects` | Create subject |
+| GET | `/api/subjects/{id}/topics` | List topics |
+| POST | `/api/subjects/{id}/topics` | Create topic |
+| GET | `/api/study-sessions` | List sessions |
+| POST | `/api/study-sessions` | Create session |
+| GET | `/api/study-sessions/stats` | Study statistics |
+| GET | `/api/projects` | List projects |
+| POST | `/api/projects` | Create project |
+| GET | `/api/projects/{id}/tasks` | List project tasks |
+| POST | `/api/projects/{id}/tasks` | Create project task |
+| GET | `/api/skills` | List skills |
+| POST | `/api/skills` | Create skill |
+| GET | `/api/profile` | Get profile |
+| PUT | `/api/profile` | Update profile |
+| GET | `/api/dashboard` | Aggregated dashboard data |
 
 ---
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
-- **State**: React Context + useReducer
-- **Persistence**: localStorage
-- **AI**: Mastra + Gemini (Level 2)
-- **Database**: PostgreSQL + Drizzle (Level 2)
-- **Auth**: Clerk (Level 2)
+- **Frontend**: Next.js 16, TypeScript, Tailwind CSS v4
+- **Backend**: FastAPI, SQLAlchemy 2.0, Alembic
+- **Database**: PostgreSQL 16
+- **State**: React Context + API service layer
+- **Testing**: Pytest (backend), ESLint (frontend)

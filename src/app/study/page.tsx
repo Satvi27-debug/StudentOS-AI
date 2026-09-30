@@ -9,8 +9,24 @@ import { todayKey } from '@/lib/date'
 import { IconClock, IconSparkles, IconTrendingUp } from '@/components/icons'
 
 export default function StudyPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const [showSessions, setShowSessions] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const today = todayKey()
   const todayMinutes = studyTimeOn(state.studySessions, today)

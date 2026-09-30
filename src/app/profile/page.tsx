@@ -5,17 +5,33 @@ import { useStudent, useStudentActions } from '@/lib/local/store'
 import { IconUser } from '@/components/icons'
 
 export default function ProfilePage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const actions = useStudentActions()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
-    name: state.student.name ?? '',
-    college: state.student.college ?? '',
-    degree: state.student.degree ?? '',
-    branch: state.student.branch ?? '',
-    graduationYear: state.student.graduationYear ?? '',
-    bio: state.student.bio ?? '',
+    name: state?.student.name ?? '',
+    college: state?.student.college ?? '',
+    degree: state?.student.degree ?? '',
+    branch: state?.student.branch ?? '',
+    graduationYear: state?.student.graduationYear ?? '',
+    bio: state?.student.bio ?? '',
   })
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const save = () => {
     actions.updateStudent({

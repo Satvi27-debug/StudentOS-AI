@@ -13,7 +13,24 @@ import {
 } from '@/components/icons'
 
 export default function ProductivityPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
+
   const summary = productivitySummary(state)
   const bySubject = studyTimeBySubject(state.studySessions, state.subjects)
 

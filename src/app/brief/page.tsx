@@ -26,7 +26,24 @@ import {
 } from '@/components/icons'
 
 export default function BriefPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
+
   const today = todayKey()
 
   const dueToday = tasksDueToday(state.tasks)

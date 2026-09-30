@@ -6,8 +6,24 @@ import { SkillCard, AddSkillForm } from '@/components/skills/SkillCard'
 import { IconTrendingUp } from '@/components/icons'
 
 export default function SkillsPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const [showAdd, setShowAdd] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const sorted = [...state.skills].sort((a, b) => {
     const order = { advanced: 0, intermediate: 1, beginner: 2 }

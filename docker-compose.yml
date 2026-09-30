@@ -1,8 +1,6 @@
 services:
-  postgres:
-    image: postgres:17-alpine
-    container_name: studentos-postgres
-    restart: unless-stopped
+  db:
+    image: postgres:16
     environment:
       POSTGRES_USER: studentos
       POSTGRES_PASSWORD: studentos
@@ -10,12 +8,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - studentos_pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U studentos -d studentos"]
+      test: ["CMD-SHELL", "pg_isready -U studentos"]
       interval: 5s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 5
 
 volumes:
-  studentos_pgdata:
+  pgdata:

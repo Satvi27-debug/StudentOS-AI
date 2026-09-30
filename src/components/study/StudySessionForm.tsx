@@ -8,31 +8,31 @@ import { IconClock } from '@/components/icons'
 export function StudySessionForm() {
   const { state } = useStudent()
   const actions = useStudentActions()
-  const [subjectId, setSubjectId] = useState(state.subjects[0]?.id ?? '')
+  const [subjectId, setSubjectId] = useState(state?.subjects[0]?.id ?? '')
   const [topicId, setTopicId] = useState('')
   const [duration, setDuration] = useState('')
   const [date, setDate] = useState(todayKey())
   const [notes, setNotes] = useState('')
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
 
-  const selectedSubject = state.subjects.find((s) => s.id === subjectId)
+  const selectedSubject = state?.subjects.find((s) => s.id === subjectId)
 
   const submit = () => {
     const mins = Number(duration)
     if (!subjectId) {
-      setError('Pick a subject.')
+      setFormError('Pick a subject.')
       return
     }
     if (!mins || mins <= 0) {
-      setError('Duration must be greater than 0.')
+      setFormError('Duration must be greater than 0.')
       return
     }
     if (mins > 1440) {
-      setError('Duration cannot exceed 24 hours.')
+      setFormError('Duration cannot exceed 24 hours.')
       return
     }
     if (!date) {
-      setError('Pick a date.')
+      setFormError('Pick a date.')
       return
     }
     actions.addStudySession({
@@ -44,7 +44,7 @@ export function StudySessionForm() {
     })
     setDuration('')
     setNotes('')
-    setError('')
+    setFormError('')
   }
 
   const inputCls =
@@ -67,7 +67,7 @@ export function StudySessionForm() {
           }}
           className={inputCls}
         >
-          {state.subjects.map((s) => (
+          {state?.subjects.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
@@ -115,7 +115,7 @@ export function StudySessionForm() {
         >
           Log session
         </button>
-        {error ? <p className="text-xs text-rose-600">{error}</p> : null}
+        {formError ? <p className="text-xs text-rose-600">{formError}</p> : null}
       </div>
     </div>
   )

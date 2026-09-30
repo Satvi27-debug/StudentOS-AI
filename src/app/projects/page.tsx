@@ -6,8 +6,24 @@ import { ProjectCard, AddProjectForm } from '@/components/projects/ProjectCard'
 import { IconFolder } from '@/components/icons'
 
 export default function ProjectsPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const [showAdd, setShowAdd] = useState(false)
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const active = state.projects.filter((p) => p.status === 'in_progress' || p.status === 'planning')
   const completed = state.projects.filter((p) => p.status === 'completed')

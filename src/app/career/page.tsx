@@ -5,13 +5,29 @@ import { useStudent, useStudentActions } from '@/lib/local/store'
 import { IconTarget } from '@/components/icons'
 
 export default function CareerPage() {
-  const { state } = useStudent()
+  const { state, loading, error } = useStudent()
   const actions = useStudentActions()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
-    targetRole: state.student.targetRole ?? '',
-    interests: state.student.interests?.join(', ') ?? '',
+    targetRole: state?.student.targetRole ?? '',
+    interests: state?.student.interests?.join(', ') ?? '',
   })
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    )
+  }
+
+  if (error || !state) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-sm text-rose-500">{error ?? 'Failed to load data'}</p>
+      </div>
+    )
+  }
 
   const save = () => {
     actions.updateStudent({
